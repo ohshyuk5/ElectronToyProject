@@ -8,15 +8,19 @@
   <body>
     <div>
       <h1>Hello World!</h1>
-      We are using Node.js <span id="node-version"></span>, Chromium
-      <span id="chrome-version"></span>, and Electron
-      <span id="electron-version"></span>.
     </div>
-    <button id="new-window" type="button">New Window</button>
+    <div>
+      <button id="open-ex-links" type="button">Open-Ex-Links</button>
+    </div>
+    <div>
+      <button id="open-file-manager" type="button">Open File Manager</button>
+    </div>
 
     <!-- You can also require other files to run in this process -->
     <script type="text/javascript">
-      require("./renderer-process/windows/create-window");
+      require("./renderer-process/native-ui/tray/tray");
+      require("./renderer-process/native-ui/ex-links-file-manager/ex-links");
+      require("./renderer-process/native-ui/ex-links-file-manager/file-manager");
     </script>
   </body>
 </html>

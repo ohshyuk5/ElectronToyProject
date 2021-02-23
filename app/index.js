@@ -1,5 +1,5 @@
 // Modules to control application life and create native browser window
-const { app, BrowserWindow } = require("electron");
+const { app, BrowserWindow, ipcMain, Menu, Tray } = require("electron");
 const { autoUpdater } = require("electron-updater");
 const path = require("path");
 
@@ -9,6 +9,29 @@ class AppUpdater {
   }
 }
 
+ipcMain.on("put-in-tray", (event) => {
+  const iconName =
+    process.platform === "win32" ? "windows-icon.png" : "iconTemplate.png";
+  const iconPath = path.join(__dirname, iconName);
+  appIcon = new Tray(iconPath);
+
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: "Remove",
+      click: () => {
+        event.sender.send("tray-removed");
+      },
+    },
+  ]);
+
+  appIcon.setToolTip("Electron Demo in the tray.");
+  appIcon.setContextMenu(contextMenu);
+});
+
+ipcMain.on("remove-tray", () => {
+  appIcon.destroy();
+});
+
 function createWindow() {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
@@ -17,7 +40,6 @@ function createWindow() {
     height: 840,
     webPreferences: {
       nodeIntegration: true,
-      preload: path.join(__dirname, "preload.js"),
       enableRemoteModule: true,
     },
   });
@@ -48,6 +70,7 @@ app.whenReady().then(() => {
 // explicitly with Cmd + Q.
 app.on("window-all-closed", function () {
   if (process.platform !== "darwin") app.quit();
+  if (appIcon) appIcon.destroy();
 });
 
 // In this file you can include the rest of your app's specific main process
