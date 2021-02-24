@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
+  </head>
+  <body>
+    <div><h1>Hello, world!</h1></div>
+    <div>
+      <button id="basic-noti" class="js-container-target demo-toggle-button">
+        Basic notification
+      </button>
+    </div>
+    <div>
+      <button id="open-ex-links" type="button">Open-Ex-Links</button>
+    </div>
+    <div>
+      <button id="open-file-manager" type="button">Open File Manager</button>
+    </div>
+    <div>
+      <button id="context-menu" type="button">Context Menu</button>
+    </div>
+
+    <!-- You can also require other files to run in this process -->
+    <script type="text/javascript">
+      require("./renderer-process/native-ui/ex-links-file-manager/ex-links");
+      require("./renderer-process/native-ui/ex-links-file-manager/file-manager");
+      require("./renderer-process/native-ui/notifications/basic-notification");
+      require("./renderer-process/menus/context-menu");
+    </script>
+  </body>
+</html>

@@ -1,77 +1,102 @@
 // Modules to control application life and create native browser window
-const { app, BrowserWindow, ipcMain, Menu, Tray } = require("electron");
+require("update-electron-app")({
+  logger: require("electron-log"),
+});
+
+const { app, BrowserWindow } = require("electron");
 const { autoUpdater } = require("electron-updater");
 const path = require("path");
+const glob = require("glob");
 
-class AppUpdater {
-  constructor() {
-    autoUpdater.checkForUpdatesAndNotify();
-  }
-}
+const debug = /--debug/.test(process.argv[2]);
+// class AppUpdater {
+//   constructor() {
+//     autoUpdater.checkForUpdatesAndNotify();
+//   }
+// }
+let mainWindow = null;
 
-ipcMain.on("put-in-tray", (event) => {
-  const iconName =
-    process.platform === "win32" ? "windows-icon.png" : "iconTemplate.png";
-  const iconPath = path.join(__dirname, iconName);
-  appIcon = new Tray(iconPath);
+function initialize() {
+  makeSingleInstance();
 
-  const contextMenu = Menu.buildFromTemplate([
-    {
-      label: "Remove",
-      click: () => {
-        event.sender.send("tray-removed");
+  loadMainProcess();
+
+  function createWindow() {
+    // Create the browser window.
+    mainWindow = new BrowserWindow({
+      width: 1200,
+      minWidth: 700,
+      height: 840,
+      title: app.getName(),
+      webPreferences: {
+        nodeIntegration: true,
       },
-    },
-  ]);
+    });
 
-  appIcon.setToolTip("Electron Demo in the tray.");
-  appIcon.setContextMenu(contextMenu);
-});
+    // and load the index.html of the app.
+    mainWindow.loadFile("app/index.html");
+    mainWindow.on("closed", () => {
+      mainWindow = null;
+    });
 
-ipcMain.on("remove-tray", () => {
-  appIcon.destroy();
-});
+    // Launch fullscreen with DevTools open, usage: npm run debug
+    if (debug) {
+      mainWindow.webContents.openDevTools();
+      mainWindow.maximize();
+      require("devtron").install();
+    }
 
-function createWindow() {
-  // Create the browser window.
-  const mainWindow = new BrowserWindow({
-    width: 1080,
-    minWidth: 680,
-    height: 840,
-    webPreferences: {
-      nodeIntegration: true,
-      enableRemoteModule: true,
-    },
+    // Open the DevTools.
+    // mainWindow.webContents.openDevTools()
+    // new AppUpdater();
+  }
+
+  app.on("ready", () => {
+    createWindow();
   });
 
-  // and load the index.html of the app.
-  mainWindow.loadFile("app/index.html");
+  app.on("window-all-closed", () => {
+    if (process.platform !== "darwin") {
+      app.quit();
+    }
+  });
 
-  // Open the DevTools.
-  // mainWindow.webContents.openDevTools()
-  new AppUpdater();
+  app.on("activate", () => {
+    if (mainWindow === null) {
+      createWindow();
+    }
+  });
 }
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
-app.whenReady().then(() => {
-  createWindow();
+// Make this app a single instance app.
+//
+// The main window will be restored and focused instead of a second window
+// opened when a person attempts to launch a second instance.
+//
+// Returns true if the current version of the app should quit instead of
+// launching.
+function makeSingleInstance() {
+  if (process.mas) return;
 
-  app.on("activate", function () {
-    // On macOS it's common to re-create a window in the app when the
-    // dock icon is clicked and there are no other windows open.
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  app.requestSingleInstanceLock();
+
+  app.on("second-instance", () => {
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+    }
   });
-});
-
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
-app.on("window-all-closed", function () {
-  if (process.platform !== "darwin") app.quit();
-  if (appIcon) appIcon.destroy();
-});
+}
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
+
+// Require each JS file in the main-process dir
+function loadMainProcess() {
+  const files = glob.sync(path.join(__dirname, "main-process/**/*.js"));
+  files.forEach((file) => {
+    require(file);
+  });
+}
+
+initialize();

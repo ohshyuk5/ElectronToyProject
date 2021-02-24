@@ -30,7 +30,9 @@
     "electron-packager": "^15.2.0"
   },
   "dependencies": {
+    "electron-log": "^4.3.2",
     "electron-updater": "^4.3.5",
-    "node-notifier": "^9.0.0"
+    "node-notifier": "^9.0.0",
+    "update-electron-app": "^2.0.1"
   }
 }
